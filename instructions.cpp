@@ -292,6 +292,14 @@ static string remove_comments(string line)
 	
 }
 
+static string case_correct(string word)
+{
+	for (size_t i = 0; i < word.length(); ++i) {
+		word[i] = toupper(word[i]); 
+	}
+	return word; 
+}
+
 instruction string_to_instr(string line) 
 {
 	instruction ret; 
@@ -301,6 +309,7 @@ instruction string_to_instr(string line)
 	line = clean_line(line);
 	line = remove_comments(line);
 	string cmd = get_word(line, 0, ' ');
+	cmd = case_correct(cmd); 
 
 	for (size_t i = 0; i < protos.size(); i++) {
 		if (cmd == protos[i].name) {
