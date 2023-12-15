@@ -255,17 +255,23 @@ static vector<instruction> get_instruction_prototypes (void)
 static string clean_line(string line) 
 {
 	// Remove leading and trailing whitespace
-	auto strBegin = line.find_first_not_of(" \t");
-	if (strBegin == string::npos)
+	auto str_begin = line.find_first_not_of(" \t");
+	if (str_begin == string::npos)
 		return "";
-	auto strEnd = line.find_last_not_of(" \t");  
-	line = line.substr(strBegin, strEnd-strBegin+1);
+	auto str_end = line.find_last_not_of(" \t");  
+	line = line.substr(str_begin, str_end-str_begin+1);
 
 	// Remove any tabs and replace with single spaces
 	size_t start_pos = 0;
 	while((start_pos = line.find('\t', start_pos)) != string::npos) {
 		line.replace(start_pos, 1, " ");
     	}
+
+	// Replace any ',' with single spaces
+	while((start_pos = line.find(',', start_pos)) != string::npos) {
+		line.replace(start_pos, 1, " "); 
+	}
+
 
 	// Remove any "  " and replace with single spaces
 	start_pos = 0;
@@ -276,6 +282,16 @@ static string clean_line(string line)
 	return line;
 }
 
+static string remove_comments(string line) 
+{
+	auto comment_begin = line.find_first_of('#');
+	if (comment_begin == string::npos)
+		return line;
+	line = line.substr(0, comment_begin);
+	return line;
+	
+}
+
 instruction string_to_instr(string line) 
 {
 	instruction ret; 
@@ -283,6 +299,7 @@ instruction string_to_instr(string line)
 	vector<instruction> protos = get_instruction_prototypes();
 
 	line = clean_line(line);
+	line = remove_comments(line);
 	string cmd = get_word(line, 0, ' ');
 
 	for (size_t i = 0; i < protos.size(); i++) {

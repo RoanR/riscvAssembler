@@ -14,13 +14,16 @@ int binary_to_file(string target, string dest)
 
 	while (getline(read_file, curr_line)) {
 		instruction ins = string_to_instr(curr_line);
-		display_instr(ins);
-		string bin_ins = instr_to_string(ins);
-		write_file << bin_ins << "\n";
+		if (ins.type != ERROR) {
+			display_instr(ins);
+			string bin_ins = instr_to_string(ins);
+			write_file << bin_ins << "\n";
+		}
 	}
 
 	read_file.close();
 	write_file.close();
+	return 0; 
 
 }
 
