@@ -33,7 +33,7 @@ static string get_word(string line, int pos, char delimiter)
 {
 
 	string temp = "";
-	for (int i = 0; i < line.length(); i++) {
+	for (size_t i = 0; i < line.length(); i++) {
 		if (line[i] == delimiter) {
 			if (pos == 0) {
 				return temp;
@@ -262,7 +262,7 @@ static string clean_line(string line)
 	line = line.substr(strBegin, strEnd-strBegin+1);
 
 	// Remove any tabs and replace with single spaces
-	int start_pos = 0;
+	size_t start_pos = 0;
 	while((start_pos = line.find('\t', start_pos)) != string::npos) {
 		line.replace(start_pos, 1, " ");
     	}
@@ -285,7 +285,7 @@ instruction string_to_instr(string line)
 	line = clean_line(line);
 	string cmd = get_word(line, 0, ' ');
 
-	for (int i = 0; i < protos.size(); i++) {
+	for (size_t i = 0; i < protos.size(); i++) {
 		if (cmd == protos[i].name) {
 			ret = protos[i];
 			break; 
@@ -304,26 +304,26 @@ instruction string_to_instr(string line)
 
 void display_instr(instruction ins) 
 {
-	cout<<"Displaying Instruction: " << endl;
-	cout<< ins.name << " : ";
+	cout<< ins.name << "(";
 	switch (ins.type) {
-		case R_TYPE: cout << "R type" <<endl;
+		case R_TYPE: cout << "R type) ";
 			break;
-		case I_TYPE: cout << "I type" <<endl; 
+		case I_TYPE: cout << "I type) "; 
 			break;
-		case S_TYPE: cout << "S type" <<endl; 
+		case S_TYPE: cout << "S type) "; 
 			break;
-		case B_TYPE: cout << "B type" <<endl;
+		case B_TYPE: cout << "B type) ";
 			break; 
-		case U_TYPE: cout << "U type" <<endl;
+		case U_TYPE: cout << "U type) ";
 			break; 
-		case J_TYPE: cout << "J type" <<endl;
+		case J_TYPE: cout << "J type) ";
 			break; 
+		default: cout << "ERROR) ";
 	}
-	cout <<" | -> rd.adr: " << ins.rd.adr << ", ";
-	cout <<"rs1.adr: " << ins.rs1.adr << ", ";
-	cout <<"rs2.adr: " << ins.rs2.adr << endl;
-	cout <<" | -> funct3: " << ins.funct3 << ", ";
-	cout <<"funct7: " << ins.funct7 << endl;
-	cout <<" | -> imm: " << ins.imm << endl;
+	cout <<"rd("     << ins.rd.adr  << "), ";
+	cout <<"rs1("    << ins.rs1.adr << "), ";
+	cout <<"rs2("    << ins.rs2.adr << "), ";
+	cout <<"funct3(" << ins.funct3  << "), ";
+	cout <<"funct7(" << ins.funct7  << "), ";
+	cout <<"imm("    << ins.imm     << "); " << endl;
 }
