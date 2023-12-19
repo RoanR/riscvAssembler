@@ -37,7 +37,7 @@ class bad_line: public exception
  */
 static bool check_key(string k, unordered_map<string, int> m) 
 {
-	return (m.find("k") != m.end());
+	return (m.find(k) != m.end());
 }
 
 /*
@@ -221,7 +221,7 @@ static string clean_line(string line)
  * @return zero on success, otherwise return non-zero. 
  */
 static int first_pass(string src_name, string dest_name, 
-	unordered_map<string, int> globals, unordered_map<string, int> tokens) 
+	unordered_map<string, int>& globals, unordered_map<string, int>& tokens) 
 {
 	ifstream src(src_name);
 	if (!src.good()) {
@@ -260,6 +260,50 @@ static int first_pass(string src_name, string dest_name,
 }
 
 /*
+ * Applies the second pass of the preprocessing stage
+ * @details does macro expansion of all known macros, 
+ * 	including calculating the offset for branch instructions to a token
+ * 
+ * 
+ */
+static int second_pass(string src_name, string dest_name,
+	unordered_map<string, int> globals, unordered_map<string, int> tokens)  
+{
+	ifstream src(src_name);
+	if (!src.good()) {
+		cerr << "Could not find " << src_name << "... exiting" << endl;
+		return 1;
+	}
+
+	ofstream dest(dest_name);
+	string curr_line;
+	int ln = 0; 
+
+	// Check for macros (tokens | globals)
+	while (getline(src, curr_line)) {
+		stringstream stream_line(curr_line);
+		string word;
+		while (getline(stream_line, word, ' ')) {
+			if (globals.find(word) != globals.end()) {
+				word = to_string(globals[word]);
+			} else if (tokens.find(word) != tokens.end()) {
+				int target = tokens[word];
+				target += -ln;
+				target *= 4;
+				word = to_string(target);
+			}
+			dest << word << ' ';
+		}
+		dest << "\n";
+		ln++;
+	}
+
+	src.close();
+	dest.close();
+	return 0;
+}
+
+/*
  * Calls all the preprocessing functions, cleaning input and doing macro expansion
  * @param src the name of the source file, this should exist
  * @param dest the name of the destination file, this should be different from source
@@ -278,7 +322,11 @@ int preprocessing(string src, string dest)
 
 	// First pass is detecting all the macro definitions 
 	// 	and building a map of them
-	if (!first_pass(src, dest, globals, tokens)) {
+	if (first_pass(src, "temp.txt", globals, tokens) != 0) {
+		return 1;
+	}
+
+	if (second_pass("temp.txt", dest, globals, tokens) != 0) {
 		return 1;
 	}
 	
