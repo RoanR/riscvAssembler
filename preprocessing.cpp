@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <iterator>
 
+#include "assembler.hpp"
 using namespace std;
 
 /*
@@ -78,7 +79,7 @@ static string get_global(string line, int ln, unordered_map<string, int>& global
 	string sym = "";
 	string val = "";
 	bool sym_val = false;
-	for (int i = 0; i < line.length(); i++) {
+	for (size_t i = 0; i < line.length(); i++) {
 		if (line[i] == ' ') {
 			if (sym_val) {
 				throw bad_line("Malformed Global\n");
@@ -120,7 +121,7 @@ static string get_global(string line, int ln, unordered_map<string, int>& global
 static string get_token(string line, int ln, unordered_map<string, int>& token_map, 
 	unordered_map<string, int> global_map) 
 {
-	int i;
+	size_t i;
 	for (i = 0; i < line.length(); i++) {
 		// If correct there should be no spaces in token
 		if (line[i] == ' ') {
@@ -263,8 +264,11 @@ static int first_pass(string src_name, string dest_name,
  * Applies the second pass of the preprocessing stage
  * @details does macro expansion of all known macros, 
  * 	including calculating the offset for branch instructions to a token
- * 
- * 
+ * @param src_name the name of the source file (must exist)
+ * @param dest_name the name of the destination file (will be overwritten/created)
+ * @param globals map from globals by name to thier defined value
+ * @param tokens map from other tokens such as branch targets, from name to value
+ * @return zero on success, otherwise return non-zero. 
  */
 static int second_pass(string src_name, string dest_name,
 	unordered_map<string, int> globals, unordered_map<string, int> tokens)  
@@ -331,9 +335,4 @@ int preprocessing(string src, string dest)
 	}
 	
 	return 0;
-}
-
-int main(void) 
-{
-	preprocessing("test.S", "res.txt"); 
 }
