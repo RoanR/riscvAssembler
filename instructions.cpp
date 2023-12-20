@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <exception>
 
 #include <string.h>
 #include <stdio.h>
@@ -10,10 +11,11 @@
 using namespace std; 
 
 /* 
- * Will translate num into string containing its binary representation.
- * The start/end variables determine how many bits to return, 
- * 	will start at end (exclusive) then decrement to start (inclusive)
- * For example binaryString(0b000101001110, 4, 0) -> "1110" 
+ * Translates int into string containing its binary representation.
+ * @param start/end determine section to translate, 
+ *  from end (exclusive) then decrement to start (inclusive).
+ * @param num the int to translate from
+ * @return string containing binary represenation of num within specified bounds
  */
 static string binary_to_string(int num, int start, int end) 
 {
@@ -29,9 +31,16 @@ static string binary_to_string(int num, int start, int end)
 	return ret;
 }
 
+/* 
+ * Gets a word from the string
+ * @param line the string to extract the word from
+ * @param pos which word to get from string, zero indexed
+ * @param delimiter the char used to seperate words, ie. ' '
+ * @return string containing the word at index specified, ie get_word("hello me",1,' ')
+ *  would return "me".  
+ */
 static string get_word(string line, int pos, char delimiter) 
 {
-
 	string temp = "";
 	for (size_t i = 0; i < line.length(); i++) {
 		if (line[i] == delimiter) {
@@ -168,7 +177,7 @@ static instruction string_to_i(instruction ins, string line)
 {
 	reg rd  = adr_to_reg(string_to_adr(get_word(line, 1, ' ')));
 	reg rs1 = adr_to_reg(string_to_adr(get_word(line, 2, ' ')));
-	int imm = stoi(get_word(line, 3, ' ')); 
+	int imm = stoi(get_word(line, 3, ' '));
 
 	ins.rd = rd;
 	ins.rs1 = rs1;
@@ -193,7 +202,13 @@ static instruction string_to_sb(instruction ins, string line)
 static instruction string_to_uj(instruction ins, string line) 
 {
 	reg rd = adr_to_reg(string_to_adr(get_word(line, 1, ' ')));
-	int imm = stoi(get_word(line, 2, ' ')); 
+	string imm_s = get_word(line, 2, ' ');
+	int imm = 0;
+	if (imm_s.find('x') == string::npos) {
+		imm = stoi(imm_s);
+	} else {
+		imm = stoi(imm_s,nullptr,16);
+	} 
 
 	ins.rd = rd; 
 	ins.imm = imm;
@@ -252,64 +267,13 @@ static vector<instruction> get_instruction_prototypes (void)
 	return all;
 }
 
-static string clean_line(string line) 
-{
-	// Remove leading and trailing whitespace
-	auto str_begin = line.find_first_not_of(" \t");
-	if (str_begin == string::npos)
-		return "";
-	auto str_end = line.find_last_not_of(" \t");  
-	line = line.substr(str_begin, str_end-str_begin+1);
-
-	// Remove any tabs and replace with single spaces
-	size_t start_pos = 0;
-	while((start_pos = line.find('\t', start_pos)) != string::npos) {
-		line.replace(start_pos, 1, " ");
-    	}
-
-	// Replace any ',' with single spaces
-	while((start_pos = line.find(',', start_pos)) != string::npos) {
-		line.replace(start_pos, 1, " "); 
-	}
-
-
-	// Remove any "  " and replace with single spaces
-	start_pos = 0;
-	while((start_pos = line.find("  ", start_pos)) != string::npos) {
-		line.replace(start_pos, 2, " ");
-	}
-
-	return line;
-}
-
-static string remove_comments(string line) 
-{
-	auto comment_begin = line.find_first_of('#');
-	if (comment_begin == string::npos)
-		return line;
-	line = line.substr(0, comment_begin);
-	return line;
-	
-}
-
-static string case_correct(string word)
-{
-	for (size_t i = 0; i < word.length(); ++i) {
-		word[i] = toupper(word[i]); 
-	}
-	return word; 
-}
-
 instruction string_to_instr(string line) 
 {
 	instruction ret; 
 
 	vector<instruction> protos = get_instruction_prototypes();
 
-	line = clean_line(line);
-	line = remove_comments(line);
 	string cmd = get_word(line, 0, ' ');
-	cmd = case_correct(cmd); 
 
 	for (size_t i = 0; i < protos.size(); i++) {
 		if (cmd == protos[i].name) {
@@ -317,13 +281,22 @@ instruction string_to_instr(string line)
 			break; 
 		}
 	}
+	try {
+		switch (ret.type) {
+			case R_TYPE: return (string_to_r(ret, line));  
+			case I_TYPE: return (string_to_i(ret, line));
+			case S_TYPE:
+			case B_TYPE: return (string_to_sb(ret, line));
+			case U_TYPE:
+			case J_TYPE: return (string_to_uj(ret, line));
+			default:     return ret;
+		}
+	} catch (invalid_argument& e) {
+		cerr << "Caught invalid_argument: " << e.what() << endl;
+		cerr << "String to instruction Failed " << endl;
+		cerr << "Line: " << line << endl;
+		exit(EXIT_FAILURE);
 
-	switch (ret.type) {
-		case R_TYPE: return (string_to_r(ret, line));  
-		case I_TYPE: return (string_to_i(ret, line));
-		case S_TYPE | B_TYPE: return (string_to_sb(ret, line));
-		case U_TYPE | J_TYPE: return (string_to_uj(ret, line));
-		default: return ret;
 	}
 
 }
