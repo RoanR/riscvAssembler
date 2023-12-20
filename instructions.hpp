@@ -43,6 +43,8 @@ struct instruction
 	std::string name;
 	// The Instruction type, R, I, S, B, U, J
 	instr_t type;
+	// PC address of this instruction in I_MEM
+	int pc;
 	// 7-bit Instruction Opcode
 	int opcode;
 	// First source register containing address and value
@@ -59,19 +61,19 @@ struct instruction
 	int funct7;
 
 	// Initialise with Error values so obvious if not overwritten
-	instruction() : name("ERROR"), type(ERROR), opcode(-1), rs1(reg{}), 
+	instruction() : name("ERROR"), type(ERROR), pc(-1), opcode(-1), rs1(reg{}), 
 		rs2(reg{}), rd(reg{}), imm(-1), funct3(-1), funct7(-1) {};
 	// Constructor for generic template
-	instruction(std::string n, instr_t t, int o) : name(n), type(t), 
+	instruction(std::string n, instr_t t, int o) : name(n), type(t), pc(0), 
 		opcode(o), rs1(reg{}), rs2(reg{}), rd(reg{}), imm(0), funct3(0),
 		funct7(0) {};
 	// Constructor for generic template with funct3
 	instruction(std::string n, instr_t t, int o, int f3) : name(n), type(t), 
-		opcode(o), rs1(reg{}), rs2(reg{}), rd(reg{}), imm(0), funct3(f3),
+		pc(0), opcode(o), rs1(reg{}), rs2(reg{}), rd(reg{}), imm(0), funct3(f3),
 		funct7(0) {};
 	// Constructor for generic template with funct3
 	instruction(std::string n, instr_t t, int o, int f3, int f7) : name(n), 
-		type(t), opcode(o), rs1(reg{}), rs2(reg{}), rd(reg{}), imm(0), 
+		type(t), pc(0), opcode(o), rs1(reg{}), rs2(reg{}), rd(reg{}), imm(0), 
 		funct3(f3), funct7(f7) {};
 	/*
 	// Constructor for R_TYPE instructions

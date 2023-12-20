@@ -6,9 +6,86 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "assembler.hpp"
 #include "instructions.hpp"
 
 using namespace std; 
+
+static reg extract_adr(string word, string prev) 
+{
+	string reg_s;
+	for (auto s : {word, prev}) {
+		reg_s = "";
+		for (size_t i = 1; i < word.length(); i++) {
+			if (isdigit(word[i])) {
+				if (word[i-1] == 'X') {
+					reg_s += word[i];
+				} else if ((i > 1) && word[i-2] == 'X') {
+					reg_s += word[i];
+				}
+			}
+		}
+		if (reg_s != ""){
+			break;
+		}
+	}
+	
+	// Check if register detected 
+	int reg_a;
+	if (reg_s == "") {
+		throw bad_line("No Register Address\n");
+	} else {
+		reg_a = stoi(reg_s);
+	}
+
+
+	reg ret = reg{};
+	if (reg_a > 31 || reg < 0) {
+		return ret;
+	} else {
+		ret.adr = adr;
+		return ret; 
+	}
+}
+
+static int extract_imm(string word) 
+{
+	// Extracting the Imm
+	string imm_s = "";
+	for (size_t i = 0; i < word.length(); i++) {
+		// Is it a Digit ?
+		if (isdigit(word[i])) {
+
+			// Check its not in X1...X9
+			if ((i > 0) && word[i-1] == 'X') {
+				continue;
+			}
+
+			// Check its not in X10 ... X32
+			if ((i > 1) && word[i-2] == 'X') {
+				continue;
+			}
+
+			imm_s += word[i];
+		}
+	}
+
+	bool hex = false;
+
+	// Checking if its a hexadecimal Value
+	for (size_t i = 1; i < word.length(); i++) {
+		if (word[i] == 'x' && word[i-1] == '0') {
+			hex = true;
+		}
+	}
+	if (imm_s == "") {
+		return -1;
+	} else if (hex) {
+		return stoi(imm_s, nullptr, 16); 
+	} else {
+		return stoi(imm_s);
+	}
+}
 
 /* 
  * Translates int into string containing its binary representation.
@@ -143,13 +220,7 @@ string instr_to_string(instruction ins)
 
 static reg adr_to_reg(int adr) 
 {
-	reg ret = reg{};
-	if (adr > 31 || adr < 0) {
-		return ret;
-	} else {
-		ret.adr = adr;
-		return ret; 
-	}
+
 }
 
 static int string_to_adr(string s) 
@@ -177,7 +248,7 @@ static instruction string_to_i(instruction ins, string line)
 {
 	reg rd  = adr_to_reg(string_to_adr(get_word(line, 1, ' ')));
 	reg rs1 = adr_to_reg(string_to_adr(get_word(line, 2, ' ')));
-	int imm = stoi(get_word(line, 3, ' '));
+	int imm = extract_imm(get_word(line, 3, ' '));
 
 	ins.rd = rd;
 	ins.rs1 = rs1;
@@ -188,28 +259,47 @@ static instruction string_to_i(instruction ins, string line)
 
 static instruction string_to_sb(instruction ins, string line) 
 {
-	reg rs1 = adr_to_reg(string_to_adr(get_word(line, 1, ' ')));
-	reg rs2 = adr_to_reg(string_to_adr(get_word(line, 2, ' ')));
-	int imm = stoi(get_word(line, 3, ' '));
+	string word, prev;
+	prev = "";
 
-	ins.rs1 = rs1;
-	ins.rs2 = rs2;
-	ins.imm = imm;
+	word = get_word(line, 1, ' ');
+	if (word == "") {
+		ins.rs1 = adr_to_reg(extract_adr(prev));
+	} else {
+		ins.rs1 = adr_to_reg(extract_adr(word));
+	}
+
+	if
+
+	word = get_word(line, 2, ' ');
+	if (word == "") {
+		throw bad_line("Not Found Rs2\n");
+	} else {
+		ins.rs1 = adr_to_reg(extract_adr(word));
+		prev = word;
+	}
+
+	word = get_word(line, 3, ' ');
+	if (word == "") {
+		ins.imm = extract_imm(prev);
+	} else {
+		ins.imm = extract_imm(word);
+	}
+
+	if (ins.imm == -1) {
+		throw bad_line("Not Found Imm\n");
+	}
 
 	return ins; 
 }
 
 static instruction string_to_uj(instruction ins, string line) 
 {
+	cout << "Started Reg";
 	reg rd = adr_to_reg(string_to_adr(get_word(line, 1, ' ')));
-	string imm_s = get_word(line, 2, ' ');
-	int imm = 0;
-	if (imm_s.find('x') == string::npos) {
-		imm = stoi(imm_s);
-	} else {
-		imm = stoi(imm_s,nullptr,16);
-	} 
-
+	cout << "... Ended Reg" << endl;
+	int imm = extract_imm(get_word(line, 2, ' '));
+	
 	ins.rd = rd; 
 	ins.imm = imm;
 
@@ -296,7 +386,11 @@ instruction string_to_instr(string line)
 		cerr << "String to instruction Failed " << endl;
 		cerr << "Line: " << line << endl;
 		exit(EXIT_FAILURE);
-
+	} catch (bad_line& e) {
+		cerr << "Caught bad_line: " << e.what();
+		cerr << "String to instruction Failed " << endl;
+		cerr << "Line: " << line << endl;
+		exit(EXIT_FAILURE);
 	}
 
 }

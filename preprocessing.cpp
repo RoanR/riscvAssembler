@@ -9,26 +9,6 @@
 #include "assembler.hpp"
 using namespace std;
 
-/*
- * A Custom Exception Class to be thrown when a line isn't properly formatted
- * @param msg Constructor takes string which can be accessed through what()
- * @public what() returns msg inputted when constructor was called
- */
-class bad_line: public exception 
-{
-	private:
-	string msg;
-
-	public:
-	// Constructor 
-	bad_line(string msg) : msg(msg) {};
-
-	// To Print the error
-	string what()
-	{
-		return msg;
-	}
-};
 
 /* 
  * Checks if a key exists in an unordered_map<string, int> 
