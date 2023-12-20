@@ -2,13 +2,18 @@
 #include <iostream>
 #include <fstream>
 
+#include "assembler.hpp"
 #include "instructions.hpp"
 
 using namespace std;
 
 int binary_to_file(string target, string dest) 
 {
-	ifstream read_file(target);
+	if (preprocessing(target, "processed.txt") != 0) {
+		return 1;
+	}
+
+	ifstream read_file("processed.txt");
 	ofstream write_file(dest);
 	string curr_line;
 
@@ -29,6 +34,6 @@ int binary_to_file(string target, string dest)
 
 int main (void) 
 {
-	binary_to_file("test.txt", "res.txt");
+	binary_to_file("test.S", "res.txt");
 	return 0;
 }
