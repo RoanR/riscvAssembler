@@ -164,6 +164,9 @@ static string get_token(string line, int ln, unordered_map<string, int>& token_m
 static string into_caps(string line) 
 {
 	for (size_t i = 0; i < line.length(); i++) {
+		// Check if its a hexadecimal value
+		if (line[i] == 'x' && i > 0 && line[i-1] == '0')
+			continue; 
 		line[i] = toupper(line[i]);
 	}
 	return line;
